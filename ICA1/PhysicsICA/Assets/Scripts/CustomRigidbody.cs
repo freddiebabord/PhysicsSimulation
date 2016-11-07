@@ -8,6 +8,7 @@ public class CustomRigidbody : MonoBehaviour {
     public Vector3 currentVelocity = Vector3.zero;
     public Vector3 currentDirection { get { return currentVelocity.normalized; } }
 
+    public bool disablePhysicsInteractions = false;
     // Use this for initialization
     void Start () {
 	

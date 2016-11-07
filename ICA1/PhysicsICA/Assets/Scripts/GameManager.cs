@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
     public GameObject puckPrefab;
     public Transform puckSpawnPoint;
     public GameObject currentSpawnedPuck;
-    public Text directionText, speedText, velocityText, massText;
+    public Text directionText, speedText, velocityText, massText, puckBounceText, floorFrictionText, floorBounceText;
     public Vector3 testDirection = Vector3.forward;
     public float forceMagnitude = 5;
     private bool recentSpawn;
@@ -21,6 +21,11 @@ public class GameManager : MonoBehaviour
     private bool trim = false;
     
     private int totalSpawned = 0;
+
+    public Slider massSlider, floorFrictionSlider, floorBounceSlider, puckBounceslider;
+    public CustomBoxCollider plungerCollider;
+    public List<CustomBoxCollider> floors = new List<CustomBoxCollider>();
+
     // Use this for initialization
     void Start () {
 	
@@ -36,13 +41,26 @@ public class GameManager : MonoBehaviour
 	        directionText.text = "Direction: " + currentSpawnedPuck.GetComponent<CustomRigidbody>().currentVelocity.normalized.ToString();
             speedText.text = "Speed: " + currentSpawnedPuck.GetComponent<CustomRigidbody>().currentVelocity.magnitude.ToString() + "m/s";
             velocityText.text = "Velocity: " + currentSpawnedPuck.GetComponent<CustomRigidbody>().currentVelocity.ToString();
-            
 
+            currentSpawnedPuck.GetComponent<CustomBoxCollider>().bouncieness = puckBounceslider.value;
+            puckBounceText.text = "Bounciness: " + puckBounceslider.value.ToString();
+
+            currentSpawnedPuck.GetComponent<CustomRigidbody>().mass = massSlider.value;
+            massText.text = "Mass: " + massSlider.value.ToString();
         }
-        if (Input.GetKey(KeyCode.Space))
+
+        for(int i = 0; i < floors.Count; ++i)
         {
-            currentSpawnedPuck.GetComponent<CustomRigidbody>().AddForce(testDirection * forceMagnitude);
+            floors[i].bouncieness = floorBounceSlider.value;
+            floors[i].frictionCoefficient = floorFrictionSlider.value;
         }
+        floorBounceText.text = "Bounciness: " + floorBounceSlider.value.ToString();
+        floorFrictionText.text = "Friction: " + floorFrictionSlider.value.ToString();
+
+        //if (Input.GetKey(KeyCode.Space))
+        //{
+        //    currentSpawnedPuck.GetComponent<CustomRigidbody>().AddForce(testDirection * forceMagnitude);
+        //}
         for (var i = 0; i < spawnedPucks.Count; i++)
         {
             if (spawnedPucks[i] == null)
@@ -97,6 +115,14 @@ public class GameManager : MonoBehaviour
         currentSpawnedPuck.GetComponent<CustomRigidbody>().mass = mass;
     }
 
+    public void SetMass(int newMass)
+    {
+        //float mass = 0.0f;
+        //if (!float.TryParse(newMass, out mass))
+        //    return;
+        currentSpawnedPuck.GetComponent<CustomRigidbody>().mass = newMass;
+    }
+
     IEnumerator spawnTimer()
     {
         recentSpawn = true;
@@ -113,5 +139,6 @@ public class GameManager : MonoBehaviour
         }
         spawnedPucks.Clear();
         totalSpawned = 0;
+        PhysicsResolver.inst.RegisterCollider(plungerCollider, false);
     }
 }

@@ -61,12 +61,12 @@ public class PhysicsResolver : MonoBehaviour {
                      //   Debug.Log("Z");
                         firstCollisionNorm = colliderB.W().normalized * sz;
                     }
-                    if (colliderA.GetComponent<CustomRigidbody>())
+                    if (!colliderA.GetComponent<CustomRigidbody>().disablePhysicsInteractions)
                     {
                         
                         var newVel =
                             Vector3.Reflect(colliderA.GetComponent<CustomRigidbody>().currentVelocity.normalized,
-                                firstCollisionNorm) * colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude * colliderA.bouncieness;
+                                firstCollisionNorm) * colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude * colliderA.bouncieness * (1 - colliderB.frictionCoefficient);
                         newVel = newVel.magnitude < 0.25f ? Vector3.zero : newVel;
                        // colliderA.transform.position += firstCollisionNorm * collisionInfo.intersectionSize.magnitude;
                         if (collisionInfo.intersectionSize.magnitude >= 0.1f)
@@ -125,10 +125,13 @@ public class PhysicsResolver : MonoBehaviour {
                         firstCollisionNorm = colliderB.U().normalized * sz;
                     }
 
+                    // Pulled from Year 2 sphere vs cube simulation assignment
                     float m1, m2, x1, x2;
                     Vector3 v1, v2, v1x, v2x, v1y, v2y, x = (colliderA.transform.position - colliderB.transform.position);
                     var rbA = colliderA.GetComponent<CustomRigidbody>();
                     var rbB = colliderB.GetComponent<CustomRigidbody>();
+
+                    
 
                     x.Normalize();
                     v1 = rbA.currentVelocity;
@@ -143,9 +146,10 @@ public class PhysicsResolver : MonoBehaviour {
                     v2x = x * x2;
                     v2y = v2 - v2x;
                     m2 = rbB.mass;
-
-                    rbA.currentVelocity = (v1x * (m1 - m2) / (m1 + m2) + v2x * (2 * m2) / (m1 + m2) + v1y);
-                    rbB.currentVelocity = (v1x * (2 * m1) / (m1 + m2) + v2x * (m2 - m1) / (m1 + m2) + v2y);
+                    if (!colliderA.GetComponent<CustomRigidbody>().disablePhysicsInteractions)
+                        rbA.currentVelocity = (v1x * (m1 - m2) / (m1 + m2) + v2x * (2 * m2) / (m1 + m2) + v1y);
+                    if (!colliderB.GetComponent<CustomRigidbody>().disablePhysicsInteractions)
+                        rbB.currentVelocity = (v1x * (2 * m1) / (m1 + m2) + v2x * (m2 - m1) / (m1 + m2) + v2y);
 
                     /*continue;
 
