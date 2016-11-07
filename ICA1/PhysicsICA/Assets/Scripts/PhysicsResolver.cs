@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class PhysicsResolver : MonoBehaviour {
 
@@ -8,15 +9,21 @@ public class PhysicsResolver : MonoBehaviour {
     private List<CustomBoxCollider> colliders = new List<CustomBoxCollider>();
     private List<CustomBoxCollider> immovablecolliders = new List<CustomBoxCollider>();
     private List<CustomBoxCollider> allColliders = new List<CustomBoxCollider>();
-    
+    public Text collisionInfoText;
+    public Toggle showBoundingVolumes;
     void Awake()
     {
         inst = this;
     }
 
 	void FixedUpdate()
-    {
-        for(int i = 0; i < colliders.Count; ++i)
+	{
+        for (var i = 0; i < allColliders.Count; i++)
+        {
+            DrawBoundingVolume(allColliders[i], Color.green);
+        }
+	    collisionInfoText.text = "";
+        for (int i = 0; i < colliders.Count; ++i)
         {
             CustomBoxCollider colliderA = colliders[i];
 
@@ -28,8 +35,8 @@ public class PhysicsResolver : MonoBehaviour {
                 CustomCollisionInfo collisionInfo;
                 if (CheckCollision(colliderA, colliderB, out collisionInfo))
                 {
-                  //  Debug.Log(colliderA.gameObject + " collision with " + colliderB.gameObject);
-                    
+                    //  Debug.Log(colliderA.gameObject + " collision with " + colliderB.gameObject);
+                    collisionInfoText.text += colliderA.gameObject.name + " collision with " + colliderB.gameObject.name + "\n";
 
                     float ax = Mathf.Abs(collisionInfo.intersectionSize.x);
                     float ay = Mathf.Abs(collisionInfo.intersectionSize.y);
@@ -54,18 +61,14 @@ public class PhysicsResolver : MonoBehaviour {
                      //   Debug.Log("Z");
                         firstCollisionNorm = colliderB.W().normalized * sz;
                     }
-                  //  Debug.Log("Normal: " + firstCollisionNorm);
-                  //  Debug.Log("Intersection size: " + collisionInfo.intersectionSize);
-                  //  Debug.DrawLine(colliderA.transform.position, colliderA.transform.position + firstCollisionNorm * 10, Color.magenta);
-                    //Debug.Break();
                     if (colliderA.GetComponent<CustomRigidbody>())
                     {
                         
                         var newVel =
                             Vector3.Reflect(colliderA.GetComponent<CustomRigidbody>().currentVelocity.normalized,
                                 firstCollisionNorm) * colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude * colliderA.bouncieness;
-                        newVel = newVel.magnitude < 0.7f ? Vector3.zero : newVel;
-                        if (newVel.magnitude >= 0.1f)
+                        newVel = newVel.magnitude < 0.25f ? Vector3.zero : newVel;
+                        if (collisionInfo.intersectionSize.magnitude >= 0.1f)
                         {
                             if (ax <= ay && ax <= az)
                             {
@@ -94,8 +97,8 @@ public class PhysicsResolver : MonoBehaviour {
                 CustomCollisionInfo collisionInfo;
                 if (CheckCollision(colliderA, colliderB, out collisionInfo))
                 {
-                   // Debug.Log(colliderA.gameObject + " collision with " + colliderB.gameObject);
-
+                    // Debug.Log(colliderA.gameObject + " collision with " + colliderB.gameObject);
+                    collisionInfoText.text += colliderA.gameObject.name + " collision with " + colliderB.gameObject.name + "\n";
 
                     float ax = Mathf.Abs(collisionInfo.intersectionSize.x);
                     float ay = Mathf.Abs(collisionInfo.intersectionSize.y);
@@ -120,10 +123,6 @@ public class PhysicsResolver : MonoBehaviour {
                       //  Debug.Log("Z");
                         firstCollisionNorm = colliderB.U().normalized * sz;
                     }
-                  //  Debug.Log("Normal: " + firstCollisionNorm);
-                   // Debug.Log("Intersection size: " + collisionInfo.intersectionSize);
-                  //  Debug.DrawLine(colliderA.transform.position, colliderA.transform.position + firstCollisionNorm * 10, Color.magenta);
-                   //  Debug.Break();
                     if (colliderA.GetComponent<CustomRigidbody>())
                     {
 
@@ -132,8 +131,8 @@ public class PhysicsResolver : MonoBehaviour {
                                 firstCollisionNorm) * colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude * colliderA.bouncieness;
                         if (colliderB.GetComponent<CustomRigidbody>())
                             newVel *= colliderB.GetComponent<CustomRigidbody>().currentVelocity.magnitude > 1 ? colliderB.GetComponent<CustomRigidbody>().currentVelocity.magnitude : 1;
-                        newVel = newVel.magnitude < 0.7f ? Vector3.zero : newVel;
-                        if (newVel.magnitude >= 0.1f)
+                        newVel = newVel.magnitude < 0.25f ? Vector3.zero : newVel;
+                        if (collisionInfo.intersectionSize.magnitude >= 0.1f)
                         {
                             if (ax <= ay && ax <= az)
                             {
@@ -158,8 +157,8 @@ public class PhysicsResolver : MonoBehaviour {
                                -firstCollisionNorm) * colliderB.GetComponent<CustomRigidbody>().currentVelocity.magnitude * colliderB.bouncieness;
                         if (colliderA.GetComponent<CustomRigidbody>())
                             newVel *= colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude > 1 ? colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude : 1;
-                        newVel = newVel.magnitude < 0.2f ? Vector3.zero : newVel;
-                        if (newVel.magnitude >= 0.1f)
+                        newVel = newVel.magnitude < 0.25f ? Vector3.zero : newVel;
+                        if (collisionInfo.intersectionSize.magnitude >= 0.1f)
                         {
                             if (ax <= ay && ax <= az)
                             {
@@ -182,6 +181,32 @@ public class PhysicsResolver : MonoBehaviour {
         }
     }
 
+    void DrawBoundingVolume(CustomBoxCollider one, Color color, bool forceDraw = false)
+    {
+        var xMin1 = one.transform.position.x + one.colliderOffset.x - (one.colliderSize.x * one.transform.lossyScale.x) / 2;
+        var xMax1 = one.transform.position.x + one.colliderOffset.x + (one.colliderSize.x * one.transform.lossyScale.x) / 2;
+        var yMin1 = one.transform.position.y + one.colliderOffset.y - (one.colliderSize.y * one.transform.lossyScale.y) / 2;
+        var yMax1 = one.transform.position.y + one.colliderOffset.y + (one.colliderSize.y * one.transform.lossyScale.y) / 2;
+        var zMin1 = one.transform.position.z + one.colliderOffset.z - (one.colliderSize.z * one.transform.lossyScale.z) / 2;
+        var zMax1 = one.transform.position.z + one.colliderOffset.z + (one.colliderSize.z * one.transform.lossyScale.z) / 2;
+
+        if (showBoundingVolumes.isOn || forceDraw)
+        {
+            GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMin1), new Vector3(xMax1, yMin1, zMin1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMin1, yMin1, zMin1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMax1, yMin1, zMax1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMin1, zMin1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMin1, yMax1, zMax1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMin1), new Vector3(xMax1, yMax1, zMin1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMin1, yMax1, zMin1), new Vector3(xMax1, yMax1, zMin1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMin1, yMax1, zMax1), new Vector3(xMin1, yMax1, zMin1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMin1, yMax1, zMax1), new Vector3(xMax1, yMax1, zMax1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMax1, yMax1, zMax1), new Vector3(xMax1, yMax1, zMin1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMax1, zMax1), color, Time.deltaTime, true);
+            GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMax1, zMax1), color, Time.deltaTime, true);
+        }
+    }
+
     bool CheckCollision(CustomBoxCollider one, CustomBoxCollider two, out CustomCollisionInfo hitInfo)//  AABB - AABB collision
     {
         var xMin1 = one.transform.position.x + one.colliderOffset.x - (one.colliderSize.x * one.transform.lossyScale.x) / 2;
@@ -191,25 +216,6 @@ public class PhysicsResolver : MonoBehaviour {
         var zMin1 = one.transform.position.z + one.colliderOffset.z - (one.colliderSize.z * one.transform.lossyScale.z) / 2;
         var zMax1 = one.transform.position.z + one.colliderOffset.z + (one.colliderSize.z * one.transform.lossyScale.z) / 2;
 
-        if (Application.isEditor)
-        {
-            Debug.DrawLine(new Vector3(xMin1, yMin1, zMin1), new Vector3(xMax1, yMin1, zMin1), Color.green);
-            Debug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMin1, yMin1, zMin1), Color.green);
-            Debug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMax1, yMin1, zMax1), Color.green);
-            Debug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMin1, zMin1), Color.green);
-
-            Debug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMin1, yMax1, zMax1), Color.green);
-            Debug.DrawLine(new Vector3(xMax1, yMin1, zMin1), new Vector3(xMax1, yMax1, zMin1), Color.green);
-
-            Debug.DrawLine(new Vector3(xMin1, yMax1, zMin1), new Vector3(xMax1, yMax1, zMin1), Color.green);
-            Debug.DrawLine(new Vector3(xMin1, yMax1, zMax1), new Vector3(xMin1, yMax1, zMin1), Color.green);
-            Debug.DrawLine(new Vector3(xMin1, yMax1, zMax1), new Vector3(xMax1, yMax1, zMax1), Color.green);
-            Debug.DrawLine(new Vector3(xMax1, yMax1, zMax1), new Vector3(xMax1, yMax1, zMin1), Color.green);
-
-            Debug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMax1, zMax1), Color.green);
-            Debug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMax1, zMax1), Color.green);
-        }
-
         var xMin2 = two.transform.position.x + two.colliderOffset.x - (two.colliderSize.x * two.transform.lossyScale.x) / 2;
         var xMax2 = two.transform.position.x + two.colliderOffset.x + (two.colliderSize.x * two.transform.lossyScale.x) / 2;
         var yMin2 = two.transform.position.y + two.colliderOffset.y - (two.colliderSize.y * two.transform.lossyScale.y) / 2;
@@ -217,24 +223,6 @@ public class PhysicsResolver : MonoBehaviour {
         var zMin2 = two.transform.position.z + two.colliderOffset.z - (two.colliderSize.z * two.transform.lossyScale.z) / 2;
         var zMax2 = two.transform.position.z + two.colliderOffset.z + (two.colliderSize.z * two.transform.lossyScale.z) / 2;
 
-        if (Application.isEditor)
-        {
-            Debug.DrawLine(new Vector3(xMin2, yMin2, zMin2), new Vector3(xMax2, yMin2, zMin2), Color.green);
-            Debug.DrawLine(new Vector3(xMin2, yMin2, zMax2), new Vector3(xMin2, yMin2, zMin2), Color.green);
-            Debug.DrawLine(new Vector3(xMin2, yMin2, zMax2), new Vector3(xMax2, yMin2, zMax2), Color.green);
-            Debug.DrawLine(new Vector3(xMax2, yMin2, zMax2), new Vector3(xMax2, yMin2, zMin2), Color.green);
-
-            Debug.DrawLine(new Vector3(xMin2, yMin2, zMax2), new Vector3(xMin2, yMax2, zMax2), Color.green);
-            Debug.DrawLine(new Vector3(xMax2, yMin2, zMin2), new Vector3(xMax2, yMax2, zMin2), Color.green);
-
-            Debug.DrawLine(new Vector3(xMin2, yMax2, zMin2), new Vector3(xMax2, yMax2, zMin2), Color.green);
-            Debug.DrawLine(new Vector3(xMin2, yMax2, zMax2), new Vector3(xMin2, yMax2, zMin2), Color.green);
-            Debug.DrawLine(new Vector3(xMin2, yMax2, zMax2), new Vector3(xMax2, yMax2, zMax2), Color.green);
-            Debug.DrawLine(new Vector3(xMax2, yMax2, zMax2), new Vector3(xMax2, yMax2, zMin2), Color.green);
-
-            Debug.DrawLine(new Vector3(xMax2, yMin2, zMax2), new Vector3(xMax2, yMax2, zMax2), Color.green);
-            Debug.DrawLine(new Vector3(xMax2, yMin2, zMax2), new Vector3(xMax2, yMax2, zMax2), Color.green);
-        }
         hitInfo = new CustomCollisionInfo();
 
         bool res = xMin1 <= xMax2 && xMax1 >= xMin2 &&
@@ -246,8 +234,9 @@ public class PhysicsResolver : MonoBehaviour {
             hitInfo.intersectionSize.x = Mathf.Max(Mathf.Min(xMax2, xMax1), 0);
             hitInfo.intersectionSize.y = Mathf.Max(Mathf.Min(yMax2, yMax1), 0);
             hitInfo.intersectionSize.z = Mathf.Max(Mathf.Min(zMax2, zMax1), 0);
-
-            }
+            DrawBoundingVolume(one, Color.red, true);
+            DrawBoundingVolume(two, Color.red, true);
+        }
 
         return res;
 

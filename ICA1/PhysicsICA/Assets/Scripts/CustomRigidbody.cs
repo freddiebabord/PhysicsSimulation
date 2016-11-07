@@ -33,7 +33,7 @@ public class CustomRigidbody : MonoBehaviour {
 
     Vector3 ApplyDrag(Vector3 acceleration, float area)
     {
-        Vector3 vsquared = new Vector3(acceleration.x * acceleration.x, acceleration.y * acceleration.y, acceleration.z * acceleration.z);
+       // Vector3 vsquared = new Vector3(acceleration.x * acceleration.x, acceleration.y * acceleration.y, acceleration.z * acceleration.z);
         return (0.47f * area * 0.5f * 1.225f * acceleration) / mass;
     }
 
