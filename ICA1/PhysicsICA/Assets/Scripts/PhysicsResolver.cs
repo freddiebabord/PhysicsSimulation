@@ -68,6 +68,7 @@ public class PhysicsResolver : MonoBehaviour {
                             Vector3.Reflect(colliderA.GetComponent<CustomRigidbody>().currentVelocity.normalized,
                                 firstCollisionNorm) * colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude * colliderA.bouncieness;
                         newVel = newVel.magnitude < 0.25f ? Vector3.zero : newVel;
+                       // colliderA.transform.position += firstCollisionNorm * collisionInfo.intersectionSize.magnitude;
                         if (collisionInfo.intersectionSize.magnitude >= 0.1f)
                         {
                             if (ax <= ay && ax <= az)
@@ -123,59 +124,83 @@ public class PhysicsResolver : MonoBehaviour {
                       //  Debug.Log("Z");
                         firstCollisionNorm = colliderB.U().normalized * sz;
                     }
+
+                    float m1, m2, x1, x2;
+                    Vector3 v1, v2, v1x, v2x, v1y, v2y, x = (colliderA.transform.position - colliderB.transform.position);
+                    var rbA = colliderA.GetComponent<CustomRigidbody>();
+                    var rbB = colliderB.GetComponent<CustomRigidbody>();
+
+                    x.Normalize();
+                    v1 = rbA.currentVelocity;
+                    x1 = Vector3.Dot(x, v1);
+                    v1x = x * x1;
+                    v1y = v1 - v1x;
+                    m1 = rbA.mass;
+
+                    x = x * -1;
+                    v2 = rbB.currentVelocity;
+                    x2 = Vector3.Dot(x, v2);
+                    v2x = x * x2;
+                    v2y = v2 - v2x;
+                    m2 = rbB.mass;
+
+                    rbA.currentVelocity = (v1x * (m1 - m2) / (m1 + m2) + v2x * (2 * m2) / (m1 + m2) + v1y);
+                    rbB.currentVelocity = (v1x * (2 * m1) / (m1 + m2) + v2x * (m2 - m1) / (m1 + m2) + v2y);
+
+                    /*continue;
+
                     if (colliderA.GetComponent<CustomRigidbody>())
                     {
+                        var directionA = colliderA.GetComponent<CustomRigidbody>().currentVelocity.normalized;
+                        var directionB = colliderB.GetComponent<CustomRigidbody>().currentVelocity.normalized;
+                        var newDir = (directionA - directionB).normalized;
+                        var speed = colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude +
+                                    colliderB.GetComponent<CustomRigidbody>().currentVelocity.magnitude;
 
                         var newVel =
-                            Vector3.Reflect(colliderA.GetComponent<CustomRigidbody>().currentVelocity.normalized,
-                                firstCollisionNorm) * colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude * colliderA.bouncieness;
+                            Vector3.Reflect(newDir, -firstCollisionNorm) * speed * colliderA.bouncieness * colliderB.bouncieness;
                         if (colliderB.GetComponent<CustomRigidbody>())
                             newVel *= colliderB.GetComponent<CustomRigidbody>().currentVelocity.magnitude > 1 ? colliderB.GetComponent<CustomRigidbody>().currentVelocity.magnitude : 1;
                         newVel = newVel.magnitude < 0.25f ? Vector3.zero : newVel;
+                        //  colliderA.transform.position += firstCollisionNorm*collisionInfo.intersectionSize.magnitude;
                         if (collisionInfo.intersectionSize.magnitude >= 0.1f)
                         {
                             if (ax <= ay && ax <= az)
-                            {
                                 colliderA.transform.position += firstCollisionNorm * collisionInfo.intersectionSize.x;
-                            }
                             else if (ay <= az)
-                            {
                                 colliderA.transform.position += firstCollisionNorm * collisionInfo.intersectionSize.y;
-                            }
                             else
-                            {
                                 colliderA.transform.position += firstCollisionNorm * collisionInfo.intersectionSize.z;
-                            }
                         }
 
                         colliderA.GetComponent<CustomRigidbody>().currentVelocity = newVel;
                     }
                     if (colliderB.GetComponent<CustomRigidbody>())
                     {
+                        var directionA = colliderA.GetComponent<CustomRigidbody>().currentVelocity.normalized;
+                        var directionB = colliderB.GetComponent<CustomRigidbody>().currentVelocity.normalized;
+                        var newDir = (directionA).normalized;
+                        var speed = colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude +
+                                    colliderB.GetComponent<CustomRigidbody>().currentVelocity.magnitude;
+
                         var newVel =
-                            Vector3.Reflect(colliderB.GetComponent<CustomRigidbody>().currentVelocity.normalized,
-                               -firstCollisionNorm) * colliderB.GetComponent<CustomRigidbody>().currentVelocity.magnitude * colliderB.bouncieness;
+                            Vector3.Reflect(newDir, firstCollisionNorm) * speed * colliderA.bouncieness * colliderB.bouncieness;
                         if (colliderA.GetComponent<CustomRigidbody>())
                             newVel *= colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude > 1 ? colliderA.GetComponent<CustomRigidbody>().currentVelocity.magnitude : 1;
                         newVel = newVel.magnitude < 0.25f ? Vector3.zero : newVel;
+                        // colliderB.transform.position += -firstCollisionNorm * collisionInfo.intersectionSize.magnitude;
                         if (collisionInfo.intersectionSize.magnitude >= 0.1f)
                         {
                             if (ax <= ay && ax <= az)
-                            {
                                 colliderB.transform.position += -firstCollisionNorm * collisionInfo.intersectionSize.x;
-                            }
                             else if (ay <= az)
-                            {
                                 colliderB.transform.position += -firstCollisionNorm * collisionInfo.intersectionSize.y;
-                            }
                             else
-                            {
                                 colliderB.transform.position += -firstCollisionNorm * collisionInfo.intersectionSize.z;
-                            }
                         }
 
                         colliderB.GetComponent<CustomRigidbody>().currentVelocity = newVel;
-                    }
+                    }*/
                 }
             }
         }
