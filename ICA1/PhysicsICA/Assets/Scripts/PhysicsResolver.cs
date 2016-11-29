@@ -2,6 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine.UI;
 
+public enum CollisionMode
+{
+    SAT,
+    AABB
+}
+
 public class PhysicsResolver : MonoBehaviour {
 
     public static PhysicsResolver inst;
@@ -27,10 +33,16 @@ public class PhysicsResolver : MonoBehaviour {
         {
             CustomBoxCollider colliderA = colliders[i];
 
+            Debug.DrawRay(colliderA.transform.position, colliderA.U() * 10, Color.magenta);
+            Debug.DrawRay(colliderA.transform.position, colliderA.V() * 10, Color.magenta);
+            Debug.DrawRay(colliderA.transform.position, colliderA.W() * 10, Color.magenta);
+
             for (int j = 0; j < immovablecolliders.Count; ++j)
             {
                 CustomBoxCollider colliderB = immovablecolliders[j];
-                
+                GLDebug.DrawRay(colliderB.transform.position, colliderB.U() * 10, Color.magenta);
+                GLDebug.DrawRay(colliderB.transform.position, colliderB.V() * 10, Color.magenta);
+                GLDebug.DrawRay(colliderB.transform.position, colliderB.W() * 10, Color.magenta);
 
                 CustomCollisionInfo collisionInfo;
                 if (CheckCollision(colliderA, colliderB, out collisionInfo))
@@ -210,65 +222,169 @@ public class PhysicsResolver : MonoBehaviour {
         }
     }
 
-    void DrawBoundingVolume(CustomBoxCollider one, Color color, bool forceDraw = false)
+    void DrawBoundingVolume(CustomBoxCollider one, Color color, bool forceDraw = false, CollisionMode mode = CollisionMode.SAT)
     {
-        var xMin1 = one.transform.position.x + one.colliderOffset.x - (one.colliderSize.x * one.transform.lossyScale.x) / 2;
-        var xMax1 = one.transform.position.x + one.colliderOffset.x + (one.colliderSize.x * one.transform.lossyScale.x) / 2;
-        var yMin1 = one.transform.position.y + one.colliderOffset.y - (one.colliderSize.y * one.transform.lossyScale.y) / 2;
-        var yMax1 = one.transform.position.y + one.colliderOffset.y + (one.colliderSize.y * one.transform.lossyScale.y) / 2;
-        var zMin1 = one.transform.position.z + one.colliderOffset.z - (one.colliderSize.z * one.transform.lossyScale.z) / 2;
-        var zMax1 = one.transform.position.z + one.colliderOffset.z + (one.colliderSize.z * one.transform.lossyScale.z) / 2;
-
         if (showBoundingVolumes.isOn || forceDraw)
         {
-            GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMin1), new Vector3(xMax1, yMin1, zMin1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMin1, yMin1, zMin1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMax1, yMin1, zMax1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMin1, zMin1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMin1, yMax1, zMax1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMin1), new Vector3(xMax1, yMax1, zMin1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMin1, yMax1, zMin1), new Vector3(xMax1, yMax1, zMin1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMin1, yMax1, zMax1), new Vector3(xMin1, yMax1, zMin1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMin1, yMax1, zMax1), new Vector3(xMax1, yMax1, zMax1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMax1, yMax1, zMax1), new Vector3(xMax1, yMax1, zMin1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMax1, zMax1), color, Time.deltaTime, true);
-            GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMax1, zMax1), color, Time.deltaTime, true);
+            if (mode == CollisionMode.AABB)
+            {
+
+                var xMin1 = one.transform.position.x + one.colliderOffset.x -
+                            (one.colliderSize.x*one.transform.lossyScale.x)/2;
+                var xMax1 = one.transform.position.x + one.colliderOffset.x +
+                            (one.colliderSize.x*one.transform.lossyScale.x)/2;
+                var yMin1 = one.transform.position.y + one.colliderOffset.y -
+                            (one.colliderSize.y*one.transform.lossyScale.y)/2;
+                var yMax1 = one.transform.position.y + one.colliderOffset.y +
+                            (one.colliderSize.y*one.transform.lossyScale.y)/2;
+                var zMin1 = one.transform.position.z + one.colliderOffset.z -
+                            (one.colliderSize.z*one.transform.lossyScale.z)/2;
+                var zMax1 = one.transform.position.z + one.colliderOffset.z +
+                            (one.colliderSize.z*one.transform.lossyScale.z)/2;
+
+
+                GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMin1), new Vector3(xMax1, yMin1, zMin1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMin1, yMin1, zMin1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMax1, yMin1, zMax1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMin1, zMin1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMin1, yMin1, zMax1), new Vector3(xMin1, yMax1, zMax1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMin1), new Vector3(xMax1, yMax1, zMin1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMin1, yMax1, zMin1), new Vector3(xMax1, yMax1, zMin1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMin1, yMax1, zMax1), new Vector3(xMin1, yMax1, zMin1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMin1, yMax1, zMax1), new Vector3(xMax1, yMax1, zMax1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMax1, yMax1, zMax1), new Vector3(xMax1, yMax1, zMin1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMax1, zMax1), color,
+                    Time.deltaTime, true);
+                GLDebug.DrawLine(new Vector3(xMax1, yMin1, zMax1), new Vector3(xMax1, yMax1, zMax1), color,
+                    Time.deltaTime, true);
+            }
+            else
+            {
+                var box = one.GetOrientedBoxBounds();
+                GLDebug.DrawLine(box.dot1, box.dot2, color,Time.deltaTime, true);
+                GLDebug.DrawLine(box.dot2, box.dot6, color,Time.deltaTime, true);
+                GLDebug.DrawLine(box.dot5, box.dot6, color,Time.deltaTime, true);
+                GLDebug.DrawLine(box.dot5, box.dot1, color,Time.deltaTime, true);
+
+                GLDebug.DrawLine(box.dot4, box.dot8, color, Time.deltaTime, true);
+                GLDebug.DrawLine(box.dot3, box.dot7, color, Time.deltaTime, true);
+                GLDebug.DrawLine(box.dot4, box.dot3, color, Time.deltaTime, true);
+                GLDebug.DrawLine(box.dot8, box.dot7, color, Time.deltaTime, true);
+
+                GLDebug.DrawLine(box.dot1, box.dot4, color, Time.deltaTime, true);
+                GLDebug.DrawLine(box.dot2, box.dot3, color, Time.deltaTime, true);
+                GLDebug.DrawLine(box.dot6, box.dot7, color, Time.deltaTime, true);
+                GLDebug.DrawLine(box.dot5, box.dot8, color, Time.deltaTime, true);
+            }
         }
     }
 
-    bool CheckCollision(CustomBoxCollider one, CustomBoxCollider two, out CustomCollisionInfo hitInfo)//  AABB - AABB collision
+    bool CheckCollision(CustomBoxCollider one, CustomBoxCollider two, out CustomCollisionInfo hitInfo, CollisionMode mode = CollisionMode.SAT)//  AABB - AABB collision
     {
-        var xMin1 = one.transform.position.x + one.colliderOffset.x - (one.colliderSize.x * one.transform.lossyScale.x) / 2;
-        var xMax1 = one.transform.position.x + one.colliderOffset.x + (one.colliderSize.x * one.transform.lossyScale.x) / 2;
-        var yMin1 = one.transform.position.y + one.colliderOffset.y - (one.colliderSize.y * one.transform.lossyScale.y) / 2;
-        var yMax1 = one.transform.position.y + one.colliderOffset.y + (one.colliderSize.y * one.transform.lossyScale.y) / 2;
-        var zMin1 = one.transform.position.z + one.colliderOffset.z - (one.colliderSize.z * one.transform.lossyScale.z) / 2;
-        var zMax1 = one.transform.position.z + one.colliderOffset.z + (one.colliderSize.z * one.transform.lossyScale.z) / 2;
-
-        var xMin2 = two.transform.position.x + two.colliderOffset.x - (two.colliderSize.x * two.transform.lossyScale.x) / 2;
-        var xMax2 = two.transform.position.x + two.colliderOffset.x + (two.colliderSize.x * two.transform.lossyScale.x) / 2;
-        var yMin2 = two.transform.position.y + two.colliderOffset.y - (two.colliderSize.y * two.transform.lossyScale.y) / 2;
-        var yMax2 = two.transform.position.y + two.colliderOffset.y + (two.colliderSize.y * two.transform.lossyScale.y) / 2;
-        var zMin2 = two.transform.position.z + two.colliderOffset.z - (two.colliderSize.z * two.transform.lossyScale.z) / 2;
-        var zMax2 = two.transform.position.z + two.colliderOffset.z + (two.colliderSize.z * two.transform.lossyScale.z) / 2;
-
         hitInfo = new CustomCollisionInfo();
 
-        bool res = xMin1 <= xMax2 && xMax1 >= xMin2 &&
-               yMin1 <= yMax2 && yMax1 >= yMin2 &&
-               zMin1 <= zMax2 && zMax1 >= zMin2;
-
-        if (res)
+        if (mode == CollisionMode.SAT)
         {
-            hitInfo.intersectionSize.x = Mathf.Max(Mathf.Min(xMax2, xMax1), 0);
-            hitInfo.intersectionSize.y = Mathf.Max(Mathf.Min(yMax2, yMax1), 0);
-            hitInfo.intersectionSize.z = Mathf.Max(Mathf.Min(zMax2, zMax1), 0);
-            DrawBoundingVolume(one, Color.red, true);
-            DrawBoundingVolume(two, Color.red, true);
+            List<Vector3> box1Points = one.GetOrientedBoxBounds().GetPoints();
+            List<Vector3> box2Points = two.GetOrientedBoxBounds().GetPoints();
+
+
+            bool right = CheckAxis(box1Points, box2Points, Vector3.right);
+            bool up = CheckAxis(box1Points, box2Points, Vector3.up);
+            bool fwd = CheckAxis(box1Points, box2Points, Vector3.forward);
+
+            return right && up && fwd;
+        }
+        else
+        {
+
+            var xMin1 = one.GetOrientedBoxBounds().min.x;
+            var xMax1 = one.GetOrientedBoxBounds().max.x;
+            var yMin1 = one.GetOrientedBoxBounds().min.y;
+            var yMax1 = one.GetOrientedBoxBounds().max.y;
+            var zMin1 = one.GetOrientedBoxBounds().min.z;
+            var zMax1 = one.GetOrientedBoxBounds().max.z;
+
+            var xMin2 = two.GetOrientedBoxBounds().min.x;
+            var xMax2 = two.GetOrientedBoxBounds().max.x;
+            var yMin2 = two.GetOrientedBoxBounds().min.y;
+            var yMax2 = two.GetOrientedBoxBounds().max.y;
+            var zMin2 = two.GetOrientedBoxBounds().min.z;
+            var zMax2 = two.GetOrientedBoxBounds().max.z;
+
+
+
+            bool res = xMin1 <= xMax2 && xMax1 >= xMin2 &&
+                       yMin1 <= yMax2 && yMax1 >= yMin2 &&
+                       zMin1 <= zMax2 && zMax1 >= zMin2;
+
+            if (res)
+            {
+                hitInfo.intersectionSize.x = Mathf.Max(Mathf.Min(xMax2, xMax1), 0);
+                hitInfo.intersectionSize.y = Mathf.Max(Mathf.Min(yMax2, yMax1), 0);
+                hitInfo.intersectionSize.z = Mathf.Max(Mathf.Min(zMax2, zMax1), 0);
+                DrawBoundingVolume(one, Color.red, true);
+                DrawBoundingVolume(two, Color.red, true);
+            }
+
+            return res;
+        }
+    }
+
+    bool CheckAxis(List<Vector3> boxPoints1, List<Vector3> boxPoints2, Vector3 axis)
+    {
+        float min_proj_box1 = Vector3.Dot(boxPoints1[0], axis);
+        int min_dot_box1 = 0;
+        float max_proj_box1 = Vector3.Dot(boxPoints1[0], axis);
+        int max_dot_box1 = 0;
+
+        for (var i = 1; i < boxPoints1.Count; i++)
+        {
+            float currentProjection = Vector3.Dot(boxPoints1[i], axis);
+            if (min_proj_box1 > currentProjection)
+            {
+                min_proj_box1 = currentProjection;
+                min_dot_box1 = i;
+            }
+
+            if (currentProjection > max_proj_box1)
+            {
+                max_proj_box1 = currentProjection;
+                max_dot_box1 = i;
+            }
         }
 
-        return res;
+        float min_proj_box2 = Vector3.Dot(boxPoints1[0], axis);
+        int min_dot_box2 = 0;
+        float max_proj_box2 = Vector3.Dot(boxPoints1[0], axis);
+        int max_dot_box2 = 0;
+        for (var i = 1; i < boxPoints2.Count; i++)
+        {
+            float currentProjection = Vector3.Dot(boxPoints2[i], axis);
+            if (min_proj_box2 > currentProjection)
+            {
+                min_proj_box2 = currentProjection;
+                min_dot_box2 = i;
+            }
 
+            if (currentProjection > max_proj_box2)
+            {
+                max_proj_box2 = currentProjection;
+                max_dot_box2 = i;
+            }
+        }
+
+        return max_proj_box2 < min_proj_box1 || max_proj_box1 < min_proj_box2;
     }
 
     public void RegisterCollider(CustomBoxCollider newCollider, bool immovable)
