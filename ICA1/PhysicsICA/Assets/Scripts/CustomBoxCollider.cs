@@ -23,9 +23,7 @@ public struct Box
 
 public class CustomBoxCollider : CustomCollider
 {
-    public Vector3 colliderSize;
-    public Vector3 colliderOffset;
-    public bool immovable = false;
+    
     
     void OnEnable()
     {
@@ -38,23 +36,7 @@ public class CustomBoxCollider : CustomCollider
     }
     
 
-    public Vector3 U()
-    {
-        //return transform.InverseTransformDirection(Vector3.right);
-        return transform.localToWorldMatrix.MultiplyVector(Vector3.right).normalized;
-    }
-
-    public Vector3 V()
-    {
-        //return transform.InverseTransformDirection(Vector3.up);
-        return transform.localToWorldMatrix.MultiplyVector(Vector3.up).normalized;
-    }
-
-    public Vector3 W()
-    {
-        //return transform.InverseTransformDirection(Vector3.forward);
-        return transform.localToWorldMatrix.MultiplyVector(Vector3.forward).normalized;
-    }
+   
 
     public Box GetOrientedBoxBounds()
     {
@@ -118,13 +100,24 @@ public class CustomBoxCollider : CustomCollider
         return box;
     }
 
-    //void OnDrawGizmos()
-    //{
-    //    Gizmos.color = Color.red;
-    //    Gizmos.DrawRay(transform.position, U());
-    //    Gizmos.color = Color.green;
-    //    Gizmos.DrawRay(transform.position, V());
-    //    Gizmos.color = Color.blue;
-    //    Gizmos.DrawRay(transform.position, W());
-    //}
+    void OnDrawGizmos()
+    {
+
+        Gizmos.color = Color.red;
+        Box box = GetOrientedBoxBounds();
+        Gizmos.DrawLine(box.dot1, box.dot2);
+        Gizmos.DrawLine(box.dot2, box.dot6);
+        Gizmos.DrawLine(box.dot5, box.dot6);
+        Gizmos.DrawLine(box.dot5, box.dot1);
+                        
+        Gizmos.DrawLine(box.dot4, box.dot8);
+        Gizmos.DrawLine(box.dot3, box.dot7);
+        Gizmos.DrawLine(box.dot4, box.dot3);
+        Gizmos.DrawLine(box.dot8, box.dot7);
+                        
+        Gizmos.DrawLine(box.dot1, box.dot4);
+        Gizmos.DrawLine(box.dot2, box.dot3);
+        Gizmos.DrawLine(box.dot6, box.dot7);
+        Gizmos.DrawLine(box.dot5, box.dot8);
+    }
 }

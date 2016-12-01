@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Net;
+using UnityEditorInternal;
 using UnityEngine.UI;
 
 public enum CollisionMode
@@ -12,9 +14,9 @@ public class PhysicsResolver : MonoBehaviour {
 
     public static PhysicsResolver inst;
 
-    private List<CustomBoxCollider> colliders = new List<CustomBoxCollider>();
-    private List<CustomBoxCollider> immovablecolliders = new List<CustomBoxCollider>();
-    private List<CustomBoxCollider> allColliders = new List<CustomBoxCollider>();
+    private List<CustomCollider> colliders = new List<CustomCollider>();
+    private List<CustomCollider> immovablecolliders = new List<CustomCollider>();
+    private List<CustomCollider> allColliders = new List<CustomCollider>();
     public Text collisionInfoText;
     public Toggle showBoundingVolumes;
     void Awake()
@@ -31,23 +33,17 @@ public class PhysicsResolver : MonoBehaviour {
 	    collisionInfoText.text = "";
         for (int i = 0; i < colliders.Count; ++i)
         {
-            CustomBoxCollider colliderA = colliders[i];
-
-            Debug.DrawRay(colliderA.transform.position, colliderA.U() * 10, Color.magenta);
-            Debug.DrawRay(colliderA.transform.position, colliderA.V() * 10, Color.magenta);
-            Debug.DrawRay(colliderA.transform.position, colliderA.W() * 10, Color.magenta);
+            CustomCollider colliderA = colliders[i];
+            
 
             for (int j = 0; j < immovablecolliders.Count; ++j)
             {
-                CustomBoxCollider colliderB = immovablecolliders[j];
-                GLDebug.DrawRay(colliderB.transform.position, colliderB.U() * 10, Color.magenta);
-                GLDebug.DrawRay(colliderB.transform.position, colliderB.V() * 10, Color.magenta);
-                GLDebug.DrawRay(colliderB.transform.position, colliderB.W() * 10, Color.magenta);
+                CustomCollider colliderB = immovablecolliders[j];
 
                 CustomCollisionInfo collisionInfo;
                 if (CheckCollision(colliderA, colliderB, out collisionInfo))
                 {
-                    //  Debug.Log(colliderA.gameObject + " collision with " + colliderB.gameObject);
+                    Debug.Log(colliderA.gameObject + " collision with " + colliderB.gameObject);
                     collisionInfoText.text += colliderA.gameObject.name + " collision with " + colliderB.gameObject.name + "\n";
 
                     float ax = Mathf.Abs(collisionInfo.intersectionSize.x);
@@ -105,12 +101,12 @@ public class PhysicsResolver : MonoBehaviour {
 
             for (int j = i+1; j < colliders.Count; ++j)
             {
-                CustomBoxCollider colliderB = colliders[j];
+                CustomCollider colliderB = colliders[j];
 
                 CustomCollisionInfo collisionInfo;
                 if (CheckCollision(colliderA, colliderB, out collisionInfo))
                 {
-                    // Debug.Log(colliderA.gameObject + " collision with " + colliderB.gameObject);
+                     Debug.Log(colliderA.gameObject + " collision with " + colliderB.gameObject);
                     collisionInfoText.text += colliderA.gameObject.name + " collision with " + colliderB.gameObject.name + "\n";
 
                     float ax = Mathf.Abs(collisionInfo.intersectionSize.x);
@@ -222,7 +218,7 @@ public class PhysicsResolver : MonoBehaviour {
         }
     }
 
-    void DrawBoundingVolume(CustomBoxCollider one, Color color, bool forceDraw = false, CollisionMode mode = CollisionMode.SAT)
+    void DrawBoundingVolume(CustomCollider one, Color color, bool forceDraw = false, CustomCollider.ColliderType cType = CustomCollider.ColliderType.Box, CollisionMode mode = CollisionMode.SAT)
     {
         if (showBoundingVolumes.isOn || forceDraw)
         {
@@ -270,75 +266,343 @@ public class PhysicsResolver : MonoBehaviour {
             }
             else
             {
-                var box = one.GetOrientedBoxBounds();
-                GLDebug.DrawLine(box.dot1, box.dot2, color,Time.deltaTime, true);
-                GLDebug.DrawLine(box.dot2, box.dot6, color,Time.deltaTime, true);
-                GLDebug.DrawLine(box.dot5, box.dot6, color,Time.deltaTime, true);
-                GLDebug.DrawLine(box.dot5, box.dot1, color,Time.deltaTime, true);
+                if (one.colliderType == CustomCollider.ColliderType.Box)
+                {
+                    var box = ((CustomBoxCollider)one).GetOrientedBoxBounds();
+                    GLDebug.DrawLine(box.dot1, box.dot2, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot2, box.dot6, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot5, box.dot6, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot5, box.dot1, color, Time.deltaTime, true);
 
-                GLDebug.DrawLine(box.dot4, box.dot8, color, Time.deltaTime, true);
-                GLDebug.DrawLine(box.dot3, box.dot7, color, Time.deltaTime, true);
-                GLDebug.DrawLine(box.dot4, box.dot3, color, Time.deltaTime, true);
-                GLDebug.DrawLine(box.dot8, box.dot7, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot4, box.dot8, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot3, box.dot7, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot4, box.dot3, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot8, box.dot7, color, Time.deltaTime, true);
 
-                GLDebug.DrawLine(box.dot1, box.dot4, color, Time.deltaTime, true);
-                GLDebug.DrawLine(box.dot2, box.dot3, color, Time.deltaTime, true);
-                GLDebug.DrawLine(box.dot6, box.dot7, color, Time.deltaTime, true);
-                GLDebug.DrawLine(box.dot5, box.dot8, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot1, box.dot4, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot2, box.dot3, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot6, box.dot7, color, Time.deltaTime, true);
+                    GLDebug.DrawLine(box.dot5, box.dot8, color, Time.deltaTime, true);
+                }
+                else if (one.colliderType == CustomCollider.ColliderType.Sphere)
+                {
+                    var sphere = ((CustomSphereCollider) one);
+
+                    Vector3 previousDirection = sphere.U().normalized;
+                    for (int x = 0; x <= 20; x++)
+                    {
+                        Vector3 start = sphere.transform.position + previousDirection*sphere.radius;
+                        Vector3 newDirection = Quaternion.Euler(0, x * (360/20), 0)*sphere.U();
+                        Vector3 end = sphere.transform.position + newDirection.normalized * sphere.radius;
+                        previousDirection = newDirection;
+                        GLDebug.DrawLine(start, end, color, Time.deltaTime, true);
+                    }
+                    previousDirection = sphere.V().normalized;
+                    for (int x = 0; x <= 20; x++)
+                    {
+                        Vector3 start = sphere.transform.position + previousDirection * sphere.radius;
+                        Vector3 newDirection = Quaternion.Euler(0, 0, x * (360 / 20)) * sphere.V();
+                        Vector3 end = sphere.transform.position + newDirection.normalized * sphere.radius;
+                        previousDirection = newDirection;
+                        GLDebug.DrawLine(start, end, color, Time.deltaTime, true);
+                    }
+                    previousDirection = sphere.W().normalized;
+                    for (int x = 0; x <= 20; x++)
+                    {
+                        Vector3 start = sphere.transform.position + previousDirection * sphere.radius;
+                        Vector3 newDirection = Quaternion.Euler(x * (360 / 20), 0, 0) * sphere.W();
+                        Vector3 end = sphere.transform.position + newDirection.normalized * sphere.radius;
+                        previousDirection = newDirection;
+                        GLDebug.DrawLine(start, end, color, Time.deltaTime, true);
+                    }
+                }
             }
         }
     }
 
-    bool CheckCollision(CustomBoxCollider one, CustomBoxCollider two, out CustomCollisionInfo hitInfo, CollisionMode mode = CollisionMode.SAT)//  AABB - AABB collision
+    bool CheckCollision(CustomCollider one_, CustomCollider two_, out CustomCollisionInfo hitInfo, CollisionMode mode = CollisionMode.SAT)//  AABB - AABB collision
     {
         hitInfo = new CustomCollisionInfo();
 
-        if (mode == CollisionMode.SAT)
+        if (one_.colliderType == CustomCollider.ColliderType.Box && two_.colliderType == CustomCollider.ColliderType.Box)
         {
-            List<Vector3> box1Points = one.GetOrientedBoxBounds().GetPoints();
-            List<Vector3> box2Points = two.GetOrientedBoxBounds().GetPoints();
+            CustomBoxCollider one = one_ as CustomBoxCollider;
+            CustomBoxCollider two = two_ as CustomBoxCollider;
 
-
-            bool right = CheckAxis(box1Points, box2Points, Vector3.right);
-            bool up = CheckAxis(box1Points, box2Points, Vector3.up);
-            bool fwd = CheckAxis(box1Points, box2Points, Vector3.forward);
-
-            return right && up && fwd;
-        }
-        else
-        {
-
-            var xMin1 = one.GetOrientedBoxBounds().min.x;
-            var xMax1 = one.GetOrientedBoxBounds().max.x;
-            var yMin1 = one.GetOrientedBoxBounds().min.y;
-            var yMax1 = one.GetOrientedBoxBounds().max.y;
-            var zMin1 = one.GetOrientedBoxBounds().min.z;
-            var zMax1 = one.GetOrientedBoxBounds().max.z;
-
-            var xMin2 = two.GetOrientedBoxBounds().min.x;
-            var xMax2 = two.GetOrientedBoxBounds().max.x;
-            var yMin2 = two.GetOrientedBoxBounds().min.y;
-            var yMax2 = two.GetOrientedBoxBounds().max.y;
-            var zMin2 = two.GetOrientedBoxBounds().min.z;
-            var zMax2 = two.GetOrientedBoxBounds().max.z;
-
-
-
-            bool res = xMin1 <= xMax2 && xMax1 >= xMin2 &&
-                       yMin1 <= yMax2 && yMax1 >= yMin2 &&
-                       zMin1 <= zMax2 && zMax1 >= zMin2;
-
-            if (res)
+            if (mode == CollisionMode.SAT)
             {
-                hitInfo.intersectionSize.x = Mathf.Max(Mathf.Min(xMax2, xMax1), 0);
-                hitInfo.intersectionSize.y = Mathf.Max(Mathf.Min(yMax2, yMax1), 0);
-                hitInfo.intersectionSize.z = Mathf.Max(Mathf.Min(zMax2, zMax1), 0);
-                DrawBoundingVolume(one, Color.red, true);
-                DrawBoundingVolume(two, Color.red, true);
+                List<Vector3> box1Points = one.GetOrientedBoxBounds().GetPoints();
+                List<Vector3> box2Points = two.GetOrientedBoxBounds().GetPoints();
+
+
+                var P1 = GetMinMaxObj(box1Points, one.V());
+                var P2 = GetMinMaxObj(box2Points, one.V());
+                var Q1 = GetMinMaxObj(box1Points, one.U());
+                var Q2 = GetMinMaxObj(box2Points, one.U());
+                var R1 = GetMinMaxObj(box1Points, one.W());
+                var R2 = GetMinMaxObj(box2Points, one.W());
+
+                var S1 = GetMinMaxObj(box1Points, two.V());
+                var S2 = GetMinMaxObj(box2Points, two.V());
+                var T1 = GetMinMaxObj(box1Points, two.U());
+                var T2 = GetMinMaxObj(box2Points, two.U());
+                var U1 = GetMinMaxObj(box1Points, two.W());
+                var U2 = GetMinMaxObj(box2Points, two.W());
+
+                bool P = P1.max < P2.min || P2.max < P1.min;
+                bool Q = Q1.max < Q2.min || Q2.max < Q1.min;
+                bool R = R1.max < R2.min || R2.max < R1.min;
+                bool S = S1.max < S2.min || S2.max < S1.min;
+                bool T = T1.max < T2.min || T2.max < T1.min;
+                bool U = U1.max < U2.min || U2.max < U1.min;
+
+                //Check if seperated
+                bool res = P || Q || R || S || T || U;
+
+                if (!res)
+                {
+                    hitInfo.intersectionSize.x =
+                        Mathf.Max(Mathf.Min(two.GetOrientedBoxBounds().max.x, one.GetOrientedBoxBounds().max.x), 0);
+                    hitInfo.intersectionSize.y =
+                        Mathf.Max(Mathf.Min(two.GetOrientedBoxBounds().max.y, one.GetOrientedBoxBounds().max.x), 0);
+                    hitInfo.intersectionSize.z =
+                        Mathf.Max(Mathf.Min(two.GetOrientedBoxBounds().max.z, one.GetOrientedBoxBounds().max.x), 0);
+                    DrawBoundingVolume(one, Color.red, true);
+                    DrawBoundingVolume(two, Color.red, true);
+                }
+
+                return !res;
+            }
+            else
+            {
+
+                var xMin1 = one.GetOrientedBoxBounds().min.x;
+                var xMax1 = one.GetOrientedBoxBounds().max.x;
+                var yMin1 = one.GetOrientedBoxBounds().min.y;
+                var yMax1 = one.GetOrientedBoxBounds().max.y;
+                var zMin1 = one.GetOrientedBoxBounds().min.z;
+                var zMax1 = one.GetOrientedBoxBounds().max.z;
+
+                var xMin2 = two.GetOrientedBoxBounds().min.x;
+                var xMax2 = two.GetOrientedBoxBounds().max.x;
+                var yMin2 = two.GetOrientedBoxBounds().min.y;
+                var yMax2 = two.GetOrientedBoxBounds().max.y;
+                var zMin2 = two.GetOrientedBoxBounds().min.z;
+                var zMax2 = two.GetOrientedBoxBounds().max.z;
+
+
+
+                bool res = xMin1 <= xMax2 && xMax1 >= xMin2 &&
+                           yMin1 <= yMax2 && yMax1 >= yMin2 &&
+                           zMin1 <= zMax2 && zMax1 >= zMin2;
+
+                if (res)
+                {
+                    hitInfo.intersectionSize.x = Mathf.Max(Mathf.Min(xMax2, xMax1), 0);
+                    hitInfo.intersectionSize.y = Mathf.Max(Mathf.Min(yMax2, yMax1), 0);
+                    hitInfo.intersectionSize.z = Mathf.Max(Mathf.Min(zMax2, zMax1), 0);
+                    DrawBoundingVolume(one, Color.red, true);
+                    DrawBoundingVolume(two, Color.red, true);
+                }
+
+                return res;
+            }
+        }
+        
+        if (one_.colliderType == CustomCollider.ColliderType.Sphere &&
+            two_.colliderType == CustomCollider.ColliderType.Box)
+        {
+            return BoxVsSphereCollision((CustomBoxCollider)two_, (CustomSphereCollider)one_, out hitInfo);
+        }
+        else if (one_.colliderType == CustomCollider.ColliderType.Box &&
+                    two_.colliderType == CustomCollider.ColliderType.Sphere)
+        {
+            return BoxVsSphereCollision((CustomBoxCollider) one_, (CustomSphereCollider) two_, out hitInfo);
+        }
+        
+        return false;
+    }
+
+    public bool BoxVsSphereCollision(CustomBoxCollider box, CustomSphereCollider sphere, out CustomCollisionInfo info)
+    {
+        info = new CustomCollisionInfo();
+        var spherePosition = sphere.transform.position + sphere.colliderOffset;
+        var boxPosition = box.transform.position + box.colliderOffset;
+
+
+        //List<Vector3> box1Points = box.GetOrientedBoxBounds().GetPoints();
+        //List<Vector3> box2Points = new List<Vector3>();
+        //box2Points.Add(spherePosition + sphere.U() * sphere.radius);
+        //box2Points.Add(spherePosition - sphere.U() * sphere.radius);
+        //box2Points.Add(spherePosition + sphere.V() * sphere.radius);
+        //box2Points.Add(spherePosition - sphere.V() * sphere.radius);
+        //box2Points.Add(spherePosition + sphere.W() * sphere.radius);
+        //box2Points.Add(spherePosition - sphere.W() * sphere.radius);
+
+
+        //var P1 = GetMinMaxObj(box1Points, box.V());
+        //var P2 = GetMinMaxObj(box2Points, box.V());
+        //var Q1 = GetMinMaxObj(box1Points, box.U());
+        //var Q2 = GetMinMaxObj(box2Points, box.U());
+        //var R1 = GetMinMaxObj(box1Points, box.W());
+        //var R2 = GetMinMaxObj(box2Points, box.W());
+
+        //var S1 = GetMinMaxObj(box1Points, sphere.V());
+        //var S2 = GetMinMaxObj(box2Points, sphere.V());
+        //var T1 = GetMinMaxObj(box1Points, sphere.U());
+        //var T2 = GetMinMaxObj(box2Points, sphere.U());
+        //var U1 = GetMinMaxObj(box1Points, sphere.W());
+        //var U2 = GetMinMaxObj(box2Points, sphere.W());
+
+        //bool P = P1.max < P2.min || P2.max < P1.min;
+        //bool Q = Q1.max < Q2.min || Q2.max < Q1.min;
+        //bool R = R1.max < R2.min || R2.max < R1.min;
+        //bool S = S1.max < S2.min || S2.max < S1.min;
+        //bool T = T1.max < T2.min || T2.max < T1.min;
+        //bool U = U1.max < U2.min || U2.max < U1.min;
+
+        ////Check if seperated
+        //bool res = P || Q || R || S || T || U;
+
+        //if (!res)
+        //{
+        //    info.intersectionSize.x =
+        //        Mathf.Max(Mathf.Min((spherePosition + (sphere.U() * sphere.radius + sphere.V() * sphere.radius + sphere.W() * sphere.radius)).x, box.GetOrientedBoxBounds().max.x), 0);
+        //    info.intersectionSize.y =
+        //        Mathf.Max(Mathf.Min((spherePosition + (sphere.U() * sphere.radius + sphere.V() * sphere.radius + sphere.W() * sphere.radius)).y, box.GetOrientedBoxBounds().max.y), 0);
+        //    info.intersectionSize.z =
+        //        Mathf.Max(Mathf.Min((spherePosition + (sphere.U() * sphere.radius + sphere.V() * sphere.radius + sphere.W() * sphere.radius)).z, box.GetOrientedBoxBounds().max.z), 0);
+        //    DrawBoundingVolume(box, Color.red, true);
+        //    DrawBoundingVolume(sphere, Color.red, true, CustomCollider.ColliderType.Sphere);
+        //}
+
+
+        //return res;
+
+        var normal = (boxPosition - spherePosition).normalized;
+        var rad = Mathf.Abs(Vector3.Dot(box.U(), normal) + Vector3.Dot(box.V(), normal) + Vector3.Dot(box.W(), normal));
+        var dot = Vector3.Dot(boxPosition, normal) - Vector3.Dot(spherePosition, normal);
+        if (dot < rad)
+        {
+            var xMax1 = box.GetOrientedBoxBounds().max.x;
+            var yMax1 = box.GetOrientedBoxBounds().max.y;
+            var zMax1 = box.GetOrientedBoxBounds().max.z;
+
+            var xMax2 = spherePosition.x + sphere.radius;
+            var yMax2 = spherePosition.y + sphere.radius;
+            var zMax2 = spherePosition.z + sphere.radius;
+
+            info.intersectionSize.x = Mathf.Max(Mathf.Min(xMax2, xMax1), 0);
+            info.intersectionSize.y = Mathf.Max(Mathf.Min(yMax2, yMax1), 0);
+            info.intersectionSize.z = Mathf.Max(Mathf.Min(zMax2, zMax1), 0);
+            DrawBoundingVolume(box, Color.red, true);
+            DrawBoundingVolume(sphere, Color.red, true, CustomCollider.ColliderType.Sphere);
+            return true;
+        }
+        return false;
+
+
+        //Vector3 v;
+        //var centerBox = box.transform.position + box.colliderOffset;
+        //var currentCorner = box.GetOrientedBoxBounds().GetPoints()[0];
+        //var max = Vector3.Distance(centerBox, spherePosition);
+        //var box2sphere = boxPosition - spherePosition;
+        //var box2SphereNormalised = box2sphere.normalized;
+        //var points = box.GetOrientedBoxBounds().GetPoints();
+        //var closestPoint = centerBox;
+        //for (int i = 1; i < points.Count; ++i)
+        //{
+        //    currentCorner = points[i];
+        //    if (Vector3.Distance(currentCorner, spherePosition) < max)
+        //        closestPoint = currentCorner;
+        //}
+
+        //if ((sphere.radius - (spherePosition - closestPoint).magnitude) <= 0)
+        //    return false;
+        //else
+        //{
+        //    var xMax1 = box.GetOrientedBoxBounds().max.x;
+        //    var yMax1 = box.GetOrientedBoxBounds().max.y;
+        //    var zMax1 = box.GetOrientedBoxBounds().max.z;
+
+        //    var xMax2 = sphere.radius - (spherePosition.x - closestPoint.x);
+        //    var yMax2 = sphere.radius - (spherePosition.y - closestPoint.y);
+        //    var zMax2 = sphere.radius - (spherePosition.z - closestPoint.z);
+
+        //   // info.intersectionSize.x = sphere.radius - (spherePosition.x - closestPoint.x);
+        //   // info.intersectionSize.y = sphere.radius - (spherePosition.y - closestPoint.y);
+        //   // info.intersectionSize.z = sphere.radius - (spherePosition.z - closestPoint.z);
+
+        //    info.intersectionSize.x = Mathf.Max(Mathf.Min(xMax2, xMax1), 0) * 2;
+        //    info.intersectionSize.y = Mathf.Max(Mathf.Min(yMax2, yMax1), 0) * 2;
+        //    info.intersectionSize.z = Mathf.Max(Mathf.Min(zMax2, zMax1), 0) * 2;
+
+        //    return true;
+        //}
+
+
+
+
+        //if (box2sphere.magnitude - max - sphere.radius > 0 && box2sphere.magnitude > 0)
+        //    return false;
+
+        //DrawBoundingVolume(box, Color.red, true);
+        //DrawBoundingVolume(sphere, Color.red, true, CustomCollider.ColliderType.Sphere);
+
+        //var xMin1 = box.GetOrientedBoxBounds().min.x;
+        //var xMax1 = box.GetOrientedBoxBounds().max.x;
+        //var yMin1 = box.GetOrientedBoxBounds().min.y;
+        //var yMax1 = box.GetOrientedBoxBounds().max.y;
+        //var zMin1 = box.GetOrientedBoxBounds().min.z;
+        //var zMax1 = box.GetOrientedBoxBounds().max.z;
+
+        //var xMin2 = spherePosition.x - sphere.radius;
+        //var xMax2 = spherePosition.x + sphere.radius;
+        //var yMin2 = spherePosition.y - sphere.radius;
+        //var yMax2 = spherePosition.y + sphere.radius;
+        //var zMin2 = spherePosition.z - sphere.radius;
+        //var zMax2 = spherePosition.z + sphere.radius;
+
+        //info.intersectionSize.x = Mathf.Max(Mathf.Min(xMax2, xMax1), 0);
+        //info.intersectionSize.y = Mathf.Max(Mathf.Min(yMax2, yMax1), 0);
+        //info.intersectionSize.z = Mathf.Max(Mathf.Min(zMax2, zMax1), 0);
+
+        //return true;
+    }
+
+    public struct MinMaxObj
+    {
+        public float min;
+        public float max;
+    }
+
+    MinMaxObj GetMinMaxObj(List<Vector3> points, Vector3 axis)
+    {
+        float min_proj_box1 = Vector3.Dot(points[0], axis);
+        int min_dot_box1 = 0;
+        float max_proj_box1 = Vector3.Dot(points[0], axis);
+        int max_dot_box1 = 0;
+
+        for (var i = 1; i < points.Count; i++)
+        {
+            float currentProjection = Vector3.Dot(points[i], axis);
+            if (min_proj_box1 > currentProjection)
+            {
+                min_proj_box1 = currentProjection;
+                min_dot_box1 = i;
             }
 
-            return res;
+            if (currentProjection > max_proj_box1)
+            {
+                max_proj_box1 = currentProjection;
+                max_dot_box1 = i;
+            }
         }
+
+        MinMaxObj obj = new MinMaxObj();
+        obj.min = min_proj_box1;
+        obj.max = max_proj_box1;
+        return obj;
     }
 
     bool CheckAxis(List<Vector3> boxPoints1, List<Vector3> boxPoints2, Vector3 axis)
@@ -387,7 +651,7 @@ public class PhysicsResolver : MonoBehaviour {
         return max_proj_box2 < min_proj_box1 || max_proj_box1 < min_proj_box2;
     }
 
-    public void RegisterCollider(CustomBoxCollider newCollider, bool immovable)
+    public void RegisterCollider(CustomCollider newCollider, bool immovable)
     {
         if(immovable)
             immovablecolliders.Add(newCollider);
@@ -396,7 +660,7 @@ public class PhysicsResolver : MonoBehaviour {
         allColliders.Add(newCollider);
     }
 
-    public void DeregisterCollider(CustomBoxCollider requestedCollider, bool immovable)
+    public void DeregisterCollider(CustomCollider requestedCollider, bool immovable)
     {
         if (immovable)
         {
